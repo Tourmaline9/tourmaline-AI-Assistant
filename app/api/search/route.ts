@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const searchData = await searchResponse.json()
-    
+
     const results: SearchResult[] = (searchData.organic_results || [])
       .slice(0, 5)
       .map((result: { title: string; link: string; snippet: string }) => ({
@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
       }))
 
     // Use Gemini to synthesize a response from search results
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
     const synthesisPrompt = `You are Tourmaline, a voice assistant. Based on the following search results, provide a concise, conversational response to the user's question: "${originalMessage}"
 
 Search Results:
@@ -71,7 +71,7 @@ Guidelines:
 async function generateFallbackResponse(message: string) {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    
+
     const fallbackPrompt = `You are Tourmaline, a voice assistant. The user asked: "${message}"
 
 This seems to be a question that might need current information, but I don't have access to real-time search right now. Please provide a helpful response based on your training data, and if the information might be outdated, gently mention that the user might want to verify for the most current details.
