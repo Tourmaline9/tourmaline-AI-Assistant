@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite-preview-06-17' })
 
     // Build conversation context
     const history = conversationHistory?.map((msg: { role: string; content: string }) => ({
