@@ -1,9 +1,9 @@
-import { TourmalineAssistant } from '@/components/tourmaline-assistant'
+import { JarvisAssistant } from '@/components/jarvis-assistant'
 
 export default function Home() {
   return (
     <main>
-      <TourmalineAssistant />
+      <JarvisAssistant />
     </main>
   )
 }

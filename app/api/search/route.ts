@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const DEFAULT_GEMINI_API_KEY = 'AIzaSyCSfrNilcmtq3XZ2Q8n0jmhfzAqxEQz0gI'
 const DEFAULT_SEARCH_API_KEY = 'ZYeCDgUXTN4SZQ7MwtuMqVJs'
-const GEMINI_MODEL = 'gemini-2.5-pro'
+const GEMINI_MODEL = 'gemini-2.5-flash'
 
 const geminiApiKey = process.env.GEMINI_API_KEY || DEFAULT_GEMINI_API_KEY
 const searchApiKey = process.env.SEARCHAPI_API_KEY || DEFAULT_SEARCH_API_KEY
