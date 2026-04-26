@@ -103,10 +103,36 @@ export function useVoiceAssistant() {
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error)
-      if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        setErrorMessage(`Speech recognition error: ${event.error}`)
-        setState('error')
+      
+      // Handle different error types
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        // These are expected behaviors, not errors
+        return
       }
+      
+      let errorMsg = 'Speech recognition error'
+      
+      if (event.error === 'network') {
+        // Network error - usually HTTPS requirement or connectivity issue
+        errorMsg = 'Network error. Please ensure you have a stable internet connection. Speech recognition requires HTTPS.'
+      } else if (event.error === 'not-allowed') {
+        errorMsg = 'Microphone access denied. Please allow microphone permissions.'
+      } else if (event.error === 'audio-capture') {
+        errorMsg = 'No microphone found. Please connect a microphone.'
+      } else if (event.error === 'service-not-allowed') {
+        errorMsg = 'Speech recognition service not available.'
+      } else {
+        errorMsg = `Speech recognition error: ${event.error}`
+      }
+      
+      setErrorMessage(errorMsg)
+      setState('error')
+      
+      // Auto-recover after showing error
+      setTimeout(() => {
+        setErrorMessage(null)
+        setState('idle')
+      }, 5000)
     }
 
     recognition.onend = () => {
