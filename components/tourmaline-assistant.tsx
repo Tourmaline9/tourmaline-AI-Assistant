@@ -7,6 +7,7 @@ import { MessageList } from './message-list'
 import { StatusIndicator } from './status-indicator'
 import { ControlPanel } from './control-panel'
 import { BackgroundEffects } from './background-effects'
+import { TextInput } from './text-input'
 
 export function TourmalineAssistant() {
   const {
@@ -19,6 +20,7 @@ export function TourmalineAssistant() {
     stopListening,
     clearConversation,
     cancel,
+    processUserInput,
   } = useVoiceAssistant()
 
   const handleOrbClick = () => {
@@ -74,12 +76,15 @@ export function TourmalineAssistant() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          {state === 'idle' && 'Click the orb or tap to start speaking'}
+          {state === 'idle' && 'Click the orb to speak or type below'}
           {state === 'listening' && 'Speak your question or command'}
           {state === 'processing' && 'Analyzing your request...'}
           {state === 'speaking' && 'Tap to interrupt'}
           {state === 'error' && 'Something went wrong. Try again.'}
         </motion.p>
+
+        {/* Text input fallback */}
+        <TextInput state={state} onSubmit={processUserInput} />
 
         {/* Control panel */}
         <ControlPanel
