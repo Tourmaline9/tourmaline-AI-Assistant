@@ -64,6 +64,7 @@ export function useVoiceAssistant() {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const animationFrameRef = useRef<number | null>(null)
+  const voiceInputBlockedRef = useRef(false)
 
   // Initialize speech recognition
   const initSpeechRecognition = useCallback(() => {
@@ -102,7 +103,7 @@ export function useVoiceAssistant() {
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error)
+      console.warn('Speech recognition warning:', event.error)
       
       // Handle different error types
       if (event.error === 'no-speech' || event.error === 'aborted') {
@@ -115,18 +116,31 @@ export function useVoiceAssistant() {
       if (event.error === 'network') {
         // Network error - usually HTTPS requirement or connectivity issue
         errorMsg = 'Network error. Please ensure you have a stable internet connection. Speech recognition requires HTTPS.'
+        voiceInputBlockedRef.current = true
       } else if (event.error === 'not-allowed') {
         errorMsg = 'Microphone access denied. Please allow microphone permissions.'
+        voiceInputBlockedRef.current = true
       } else if (event.error === 'audio-capture') {
         errorMsg = 'No microphone found. Please connect a microphone.'
       } else if (event.error === 'service-not-allowed') {
         errorMsg = 'Speech recognition service not available.'
+        voiceInputBlockedRef.current = true
       } else {
         errorMsg = `Speech recognition error: ${event.error}`
       }
       
       setErrorMessage(errorMsg)
       setState('error')
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop())
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+      }
+      setAudioLevel(0)
       
       // Auto-recover after showing error
       setTimeout(() => {
@@ -358,6 +372,12 @@ export function useVoiceAssistant() {
 
     if (!window.isSecureContext) {
       setErrorMessage('Voice input requires HTTPS (or localhost). You can still use text input.')
+      setState('error')
+      return
+    }
+
+    if (voiceInputBlockedRef.current) {
+      setErrorMessage('Voice input is unavailable in this browser/session. You can still use text input.')
       setState('error')
       return
     }
