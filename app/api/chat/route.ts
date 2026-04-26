@@ -1,7 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const DEFAULT_GEMINI_API_KEY = 'AIzaSyCSfrNilcmtq3XZ2Q8n0jmhfzAqxEQz0gI'
+const GEMINI_MODEL = 'gemini-2.5-pro'
+
+const geminiApiKey = process.env.GEMINI_API_KEY || DEFAULT_GEMINI_API_KEY
+const genAI = new GoogleGenerativeAI(geminiApiKey)
 
 const SYSTEM_PROMPT = `You are Tourmaline, a sophisticated AI voice assistant with a calm, helpful, and slightly futuristic personality. 
 
@@ -25,14 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     const { message, conversationHistory } = await req.json()
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'Gemini API key not configured' },
-        { status: 500 }
-      )
-    }
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL })
 
     // Build conversation context
     const history = conversationHistory?.map((msg: { role: string; content: string }) => ({

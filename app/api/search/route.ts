@@ -1,7 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const DEFAULT_GEMINI_API_KEY = 'AIzaSyCSfrNilcmtq3XZ2Q8n0jmhfzAqxEQz0gI'
+const DEFAULT_SEARCH_API_KEY = 'ZYeCDgUXTN4SZQ7MwtuMqVJs'
+const GEMINI_MODEL = 'gemini-2.5-pro'
+
+const geminiApiKey = process.env.GEMINI_API_KEY || DEFAULT_GEMINI_API_KEY
+const searchApiKey = process.env.SEARCHAPI_API_KEY || DEFAULT_SEARCH_API_KEY
+const genAI = new GoogleGenerativeAI(geminiApiKey)
 
 interface SearchResult {
   title: string
@@ -13,14 +19,9 @@ export async function POST(req: NextRequest) {
   try {
     const { query, originalMessage } = await req.json()
 
-    if (!process.env.SEARCHAPI_API_KEY) {
-      // Fallback: use Gemini to generate a response without search
-      return await generateFallbackResponse(originalMessage)
-    }
-
     // Perform search using SearchAPI
     const searchResponse = await fetch(
-      `https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${process.env.SEARCHAPI_API_KEY}`
+      `https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${searchApiKey}`
     )
 
     if (!searchResponse.ok) {
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
       }))
 
     // Use Gemini to synthesize a response from search results
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL })
 
     const synthesisPrompt = `You are Tourmaline, a voice assistant. Based on the following search results, provide a concise, conversational response to the user's question: "${originalMessage}"
 
@@ -70,7 +71,7 @@ Guidelines:
 
 async function generateFallbackResponse(message: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL })
 
     const fallbackPrompt = `You are Tourmaline, a voice assistant. The user asked: "${message}"
 
