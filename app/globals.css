@@ -234,23 +234,32 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ElevenLabs Widget - Center and scale up */
-.voice-widget-center {
+/* ElevenLabs Widget - Override default fixed positioning to center it */
+.elevenlabs-widget-wrapper {
+  position: relative !important;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  min-width: 200px;
 }
 
-.voice-widget-center elevenlabs-convai {
-  transform: scale(1.8);
+/* Target the widget's shadow DOM container */
+elevenlabs-convai {
+  --widget-position: static !important;
+}
+
+/* Force the widget container to be centered, not fixed to corner */
+.elevenlabs-centered-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 200px;
+}
+
+/* Scale the widget up for better visibility */
+.elevenlabs-centered-container elevenlabs-convai {
+  transform: scale(2);
   transform-origin: center center;
-}
-
-/* Override ElevenLabs widget default positioning */
-.voice-widget-center elevenlabs-convai::part(widget) {
-  position: relative !important;
-  bottom: auto !important;
-  right: auto !important;
 }

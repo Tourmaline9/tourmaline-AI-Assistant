@@ -1,30 +1,36 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChatInterface } from './chat-interface'
 
 export function JarvisAssistant() {
   const [isChatOpen, setIsChatOpen] = useState(false)
-  const [isWidgetReady, setIsWidgetReady] = useState(false)
-  const widgetContainerRef = useRef<HTMLDivElement>(null)
+  const [isClient, setIsClient] = useState(false)
+
+  // Generate particle positions only on client to avoid hydration mismatch
+  const particles = useMemo(() => {
+    if (!isClient) return []
+    return [...Array(15)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: 8 + Math.random() * 6,
+      delay: Math.random() * 5,
+    }))
+  }, [isClient])
 
   useEffect(() => {
+    setIsClient(true)
+    
     // Load the ElevenLabs Convai widget script
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
-    script.async = true
-    script.type = 'text/javascript'
-    script.onload = () => {
-      setIsWidgetReady(true)
-    }
-    document.body.appendChild(script)
-
-    return () => {
-      const existingScript = document.querySelector('script[src="https://unpkg.com/@elevenlabs/convai-widget-embed"]')
-      if (existingScript) {
-        existingScript.remove()
-      }
+    const existingScript = document.querySelector('script[src="https://unpkg.com/@elevenlabs/convai-widget-embed"]')
+    if (!existingScript) {
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+      script.async = true
+      script.type = 'text/javascript'
+      document.body.appendChild(script)
     }
   }, [])
 
@@ -35,11 +41,11 @@ export function JarvisAssistant() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--primary)_0%,_transparent_50%)] opacity-5" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_0%,_var(--background)_70%)]" />
 
-      {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 px-4 w-full max-w-2xl">
+      {/* Main content - centered */}
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8 px-4 w-full">
         {/* Title */}
         <motion.div
-          className="text-center mb-4"
+          className="text-center"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
@@ -54,7 +60,6 @@ export function JarvisAssistant() {
 
         {/* Central Voice Interface - ElevenLabs Widget */}
         <motion.div
-          ref={widgetContainerRef}
           className="relative flex items-center justify-center"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -65,43 +70,45 @@ export function JarvisAssistant() {
             {[...Array(3)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute rounded-full border border-primary/20"
+                className="absolute rounded-full border border-primary/30"
                 style={{
-                  width: 200 + i * 60,
-                  height: 200 + i * 60,
+                  width: 220 + i * 80,
+                  height: 220 + i * 80,
                 }}
                 animate={{
-                  scale: [1, 1.05, 1],
-                  opacity: [0.3 - i * 0.08, 0.5 - i * 0.1, 0.3 - i * 0.08],
+                  scale: [1, 1.08, 1],
+                  opacity: [0.4 - i * 0.1, 0.6 - i * 0.15, 0.4 - i * 0.1],
                 }}
                 transition={{
                   duration: 3 + i * 0.5,
                   repeat: Infinity,
                   ease: 'easeInOut',
-                  delay: i * 0.3,
+                  delay: i * 0.4,
                 }}
               />
             ))}
           </div>
 
           {/* Glow effect */}
-          <div className="absolute w-48 h-48 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
 
-          {/* ElevenLabs Widget Container - Centered and prominent */}
-          <div className="relative z-10 voice-widget-center">
-            {/* @ts-expect-error - ElevenLabs custom element */}
-            <elevenlabs-convai agent-id="agent_6701kq5tdq3eetfbq9jedvmzy35r"></elevenlabs-convai>
+          {/* ElevenLabs Widget Container - Centered */}
+          <div className="elevenlabs-centered-container relative z-10">
+            {isClient && (
+              // @ts-expect-error - ElevenLabs custom element
+              <elevenlabs-convai agent-id="agent_6701kq5tdq3eetfbq9jedvmzy35r"></elevenlabs-convai>
+            )}
           </div>
         </motion.div>
 
         {/* Status text */}
         <motion.p
-          className="text-center text-muted-foreground text-sm mt-4"
+          className="text-center text-muted-foreground text-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.6 }}
         >
-          Tap the orb above to start a conversation
+          Tap the orb to start a conversation
         </motion.p>
 
         {/* Chat button - secondary option */}
@@ -126,30 +133,32 @@ export function JarvisAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Ambient floating particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(15)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary/40 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              opacity: [0.2, 0.6, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 8 + Math.random() * 6,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: 'easeInOut',
-            }}
-          />
-        ))}
-      </div>
+      {/* Ambient floating particles - only render on client */}
+      {isClient && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {particles.map((particle) => (
+            <motion.div
+              key={particle.id}
+              className="absolute w-1 h-1 bg-primary/40 rounded-full"
+              style={{
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+              }}
+              animate={{
+                y: [0, -100, 0],
+                opacity: [0.2, 0.6, 0.2],
+                scale: [1, 1.5, 1],
+              }}
+              transition={{
+                duration: particle.duration,
+                repeat: Infinity,
+                delay: particle.delay,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
