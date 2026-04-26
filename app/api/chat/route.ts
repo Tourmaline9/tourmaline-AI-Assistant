@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-const DEFAULT_GEMINI_API_KEY = 'AIzaSyCSfrNilcmtq3XZ2Q8n0jmhfzAqxEQz0gI'
+const DEFAULT_GEMINI_API_KEY = 'AIzaSyDFpfATXFFpTu434Ahmk2Xi_U-tXq6Z6k8'
 const GEMINI_MODEL = 'gemini-2.5-flash'
 
 const geminiApiKey = process.env.GEMINI_API_KEY || DEFAULT_GEMINI_API_KEY
