@@ -233,3 +233,24 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ElevenLabs Widget - Center and scale up */
+.voice-widget-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  min-width: 200px;
+}
+
+.voice-widget-center elevenlabs-convai {
+  transform: scale(1.8);
+  transform-origin: center center;
+}
+
+/* Override ElevenLabs widget default positioning */
+.voice-widget-center elevenlabs-convai::part(widget) {
+  position: relative !important;
+  bottom: auto !important;
+  right: auto !important;
+}
