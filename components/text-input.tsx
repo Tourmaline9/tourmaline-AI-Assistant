@@ -16,7 +16,7 @@ export function TextInput({ state, onSubmit }: TextInputProps) {
   const handleSubmit = useCallback((e: FormEvent) => {
     e.preventDefault()
     const trimmed = inputValue.trim()
-    if (trimmed && state === 'idle') {
+    if (trimmed && (state === 'idle' || state === 'error')) {
       onSubmit(trimmed)
       setInputValue('')
     }
@@ -26,14 +26,15 @@ export function TextInput({ state, onSubmit }: TextInputProps) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       const trimmed = inputValue.trim()
-      if (trimmed && state === 'idle') {
+      if (trimmed && (state === 'idle' || state === 'error')) {
         onSubmit(trimmed)
         setInputValue('')
       }
     }
   }, [inputValue, state, onSubmit])
 
-  const isDisabled = state !== 'idle'
+  // Allow input when idle or in error state (so user can still type when speech fails)
+  const isDisabled = state !== 'idle' && state !== 'error'
 
   return (
     <motion.form
@@ -49,7 +50,7 @@ export function TextInput({ state, onSubmit }: TextInputProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={isDisabled ? 'Processing...' : 'Type your message...'}
+          placeholder={isDisabled ? 'Processing...' : state === 'error' ? 'Voice unavailable - type here instead...' : 'Type your message...'}
           disabled={isDisabled}
           className="w-full px-5 py-3 pr-14 rounded-full bg-card/80 backdrop-blur-md border border-primary/30 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-200 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Message input"
