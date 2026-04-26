@@ -57,7 +57,7 @@ export function useVoiceAssistant() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(false)
   const [audioLevel, setAudioLevel] = useState(0)
-  
+
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -69,7 +69,7 @@ export function useVoiceAssistant() {
   const initSpeechRecognition = useCallback(() => {
     const windowWithSpeech = window as unknown as WindowWithSpeechRecognition
     const SpeechRecognitionConstructor = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition
-    
+
     if (!SpeechRecognitionConstructor) {
       setErrorMessage('Speech recognition not supported in this browser')
       return null
@@ -103,15 +103,15 @@ export function useVoiceAssistant() {
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error)
-      
+
       // Handle different error types
       if (event.error === 'no-speech' || event.error === 'aborted') {
         // These are expected behaviors, not errors
         return
       }
-      
+
       let errorMsg = 'Speech recognition error'
-      
+
       if (event.error === 'network') {
         // Network error - usually HTTPS requirement or connectivity issue
         errorMsg = 'Network error. Please ensure you have a stable internet connection. Speech recognition requires HTTPS.'
@@ -124,10 +124,10 @@ export function useVoiceAssistant() {
       } else {
         errorMsg = `Speech recognition error: ${event.error}`
       }
-      
+
       setErrorMessage(errorMsg)
       setState('error')
-      
+
       // Auto-recover after showing error
       setTimeout(() => {
         setErrorMessage(null)
@@ -154,12 +154,12 @@ export function useVoiceAssistant() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaStreamRef.current = stream
-      
+
       audioContextRef.current = new AudioContext()
       analyserRef.current = audioContextRef.current.createAnalyser()
       const source = audioContextRef.current.createMediaStreamSource(stream)
       source.connect(analyserRef.current)
-      
+
       analyserRef.current.fftSize = 256
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
 
@@ -171,7 +171,7 @@ export function useVoiceAssistant() {
         }
         animationFrameRef.current = requestAnimationFrame(updateLevel)
       }
-      
+
       updateLevel()
     } catch (err) {
       console.error('Failed to start audio monitoring:', err)
@@ -194,6 +194,11 @@ export function useVoiceAssistant() {
 
   // Process user input
   const processUserInput = useCallback(async (text: string) => {
+    const normalizedText = text.trim()
+    if (!normalizedText) {
+      return
+    }
+
     setState('processing')
     setCurrentTranscript('')
 
@@ -201,10 +206,10 @@ export function useVoiceAssistant() {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: text,
+      content: normalizedText,
       timestamp: new Date(),
     }
-    
+
     setMessages(prev => [...prev, userMessage])
 
     try {
@@ -219,7 +224,7 @@ export function useVoiceAssistant() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text,
+          message: normalizedText,
           conversationHistory,
         }),
       })
@@ -238,7 +243,7 @@ export function useVoiceAssistant() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: aiResponseData.searchQuery,
-            originalMessage: text,
+            originalMessage: normalizedText,
           }),
         })
 
@@ -250,7 +255,7 @@ export function useVoiceAssistant() {
 
       // Generate TTS
       setState('speaking')
-      
+
       const ttsResponse = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -280,12 +285,20 @@ export function useVoiceAssistant() {
 
     } catch (error) {
       console.error('Error processing input:', error)
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: "I'm having trouble connecting to my AI service right now. Please check your API keys and try again.",
+        timestamp: new Date(),
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
       setErrorMessage('Failed to process your request')
-      setState('error')
-      
+      setState('idle')
+
       setTimeout(() => {
         setErrorMessage(null)
-        setState('idle')
       }, 3000)
     }
   }, [messages])
@@ -324,7 +337,7 @@ export function useVoiceAssistant() {
       utterance.rate = 1.0
       utterance.pitch = 1.0
       utterance.volume = 1.0
-      
+
       utterance.onend = () => {
         setState('idle')
       }
@@ -342,7 +355,13 @@ export function useVoiceAssistant() {
   // Start listening
   const startListening = useCallback(async () => {
     setErrorMessage(null)
-    
+
+    if (!window.isSecureContext) {
+      setErrorMessage('Voice input requires HTTPS (or localhost). You can still use text input.')
+      setState('error')
+      return
+    }
+
     if (!recognitionRef.current) {
       recognitionRef.current = initSpeechRecognition()
     }
