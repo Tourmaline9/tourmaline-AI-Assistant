@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech'
-const DEFAULT_ELEVENLABS_API_KEY = 'sk_34b94e9b1125a16469dd9d00c9a4f8927af8ffe6b129d96a'
+const DEFAULT_ELEVENLABS_API_KEY = '4e3842f2b9fbddf43ce2767eab902b98a9bd8ca210e50c168b93ef3422a9e4b5'
 const ELEVENLABS_MODEL = 'eleven_v3'
 
 // Rachel voice - clear, professional, slightly warm
