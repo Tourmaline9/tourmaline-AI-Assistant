@@ -194,6 +194,11 @@ export function useVoiceAssistant() {
 
   // Process user input
   const processUserInput = useCallback(async (text: string) => {
+    const normalizedText = text.trim()
+    if (!normalizedText) {
+      return
+    }
+
     setState('processing')
     setCurrentTranscript('')
 
@@ -201,7 +206,7 @@ export function useVoiceAssistant() {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: text,
+      content: normalizedText,
       timestamp: new Date(),
     }
     
@@ -219,7 +224,7 @@ export function useVoiceAssistant() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text,
+          message: normalizedText,
           conversationHistory,
         }),
       })
@@ -238,7 +243,7 @@ export function useVoiceAssistant() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: aiResponseData.searchQuery,
-            originalMessage: text,
+            originalMessage: normalizedText,
           }),
         })
 
@@ -280,12 +285,20 @@ export function useVoiceAssistant() {
 
     } catch (error) {
       console.error('Error processing input:', error)
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: "I'm having trouble connecting to my AI service right now. Please check your API keys and try again.",
+        timestamp: new Date(),
+      }
+
+      setMessages(prev => [...prev, assistantMessage])
       setErrorMessage('Failed to process your request')
-      setState('error')
-      
+      setState('idle')
+
       setTimeout(() => {
         setErrorMessage(null)
-        setState('idle')
       }, 3000)
     }
   }, [messages])
@@ -342,6 +355,12 @@ export function useVoiceAssistant() {
   // Start listening
   const startListening = useCallback(async () => {
     setErrorMessage(null)
+
+    if (!window.isSecureContext) {
+      setErrorMessage('Voice input requires HTTPS (or localhost). You can still use text input.')
+      setState('error')
+      return
+    }
     
     if (!recognitionRef.current) {
       recognitionRef.current = initSpeechRecognition()
